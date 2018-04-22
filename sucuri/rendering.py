@@ -127,6 +127,7 @@ def addrules(text, obj):
     space = 0
     line = 0
     blocking = False
+    blocktype = ''
     spaceBlock = 0
 
     for textline in text:
@@ -143,6 +144,7 @@ def addrules(text, obj):
                 rule['type'] = ruleline[0]
                 rule['rule'] = ruletext
                 blocking = True
+                blocktype = ruleline[0]
                 spaceBlock = space
                 block = ruleblock(text, line - 1, rule, obj)
                 
@@ -151,7 +153,7 @@ def addrules(text, obj):
                         result.append(blocktext)
                 
             
-            elif 'end' in ruleline[0] and space == spaceBlock:
+            elif 'end' + blocktype == ruleline[0] and space == spaceBlock:
                 blocking = False
         
             continue
@@ -193,9 +195,9 @@ def ruleblock(text, line, rule, obj):
 
             if space == spaces(textline) and 'end' + rule['type'] in textline:
                 splited = rule['rule'].split(' ')
+                newresult = []
                 if splited[0] == 'for':
                     textblock = 'for ' + splited[1] + " in range(len(obj['" + splited[3] + "'])):\n"
-                    newresult = []
                     for x in range(len(result)):
                         text = result[x].replace('\n','')
                         text = text.replace('#' + splited[1], "' + str(obj['" + splited[3] + "'][" + splited[1] + "]) + '")
@@ -203,6 +205,11 @@ def ruleblock(text, line, rule, obj):
                     exec(textblock)
                     if len(newresult) > 0:
                         result = newresult
+                elif splited[0] == 'if':
+                    textblock = rule['rule'] + '\n'
+                    for x in range(len(result)):
+                        text = result[x].replace('\n','')
+                        textblock = textblock + "    newresult.append('" + text + "')" + '\n'
 
                 return result
     return result
